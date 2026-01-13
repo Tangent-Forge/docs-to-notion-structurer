@@ -1,0 +1,28 @@
+{
+  "timeZone": "America/Los_Angeles",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/documents",
+    "https://www.googleapis.com/auth/script.container.ui"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Docs to Notion Structurer",
+      "logoUrl": "https://www.gstatic.com/images/icons/material/system/1x/description_black_24dp.png",
+      "layoutProperties": {
+        "primaryColor": "#00BFA5",
+        "secondaryColor": "#E0F2F1"
+      },
+      "homepageTrigger": {
+        "runFunction": "onOpen"
+      }
+    },
+    "docs": {
+      "homepageTrigger": {
+        "runFunction": "onOpen"
+      }
+    }
+  }
+}

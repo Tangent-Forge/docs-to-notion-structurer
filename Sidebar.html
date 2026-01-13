@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: 'Google Sans', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f8f9fa;
+      }
+      .container {
+        max-width: 380px;
+      }
+      h1 {
+        color: #202124;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .btn-primary {
+        background-color: #00BFA5;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #00ACC1;
+      }
+      .btn-secondary {
+        background-color: #f1f3f4;
+        color: #202124;
+      }
+      .btn-secondary:hover {
+        background-color: #e8eaed;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        font-weight: 600;
+        color: #202124;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      .form-input:focus {
+        outline: none;
+        border-color: #00BFA5;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .status-connected { background-color: #e6f4ea; color: #188038; }
+      .status-disconnected { background-color: #fce8e6; color: #d93025; }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #5f6368;
+      }
+      .spinner {
+        border: 3px solid #f1f3f4;
+        border-top: 3px solid #00BFA5;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .error {
+        color: #d93025;
+        padding: 12px;
+        background-color: #fce8e6;
+        border-radius: 4px;
+        margin-bottom: 16px;
+      }
+      .success {
+        color: #188038;
+        padding: 12px;
+        background-color: #ceead6;
+        border-radius: 4px;
+        margin-bottom: 16px;
+      }
+      .info {
+        color: #1976D2;
+        padding: 12px;
+        background-color: #e8f0fe;
+        border-radius: 4px;
+        margin-bottom: 16px;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #5f6368;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📄 Docs to Notion</h1>
+      
+      <div id="content">
+        <div class="card">
+          <p style="color: #5f6368; margin-bottom: 16px;">
+            Convert Google Docs content into structured Notion pages.
+          </p>
+          <button class="btn btn-primary" onclick="checkApiKey()">
+            Check Setup
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentContent = null;
+
+      function checkApiKey() {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Checking setup...</p>
+          </div>
+        `;
+
+        google.script.run
+          .withSuccessHandler(onApiKeyChecked)
+          .withFailureHandler(onCheckError)
+          .apiCheckApiKey();
+      }
+
+      function onApiKeyChecked(result) {
+        const content = document.getElementById('content');
+        
+        if (result.hasKey) {
+          content.innerHTML = `
+            <div class="info">
+              <strong>✓ API Key Configured</strong>
+            </div>
+            <div class="card">
+              <p style="color: #5f6368; margin-bottom: 16px;">
+                Ready to convert this document to Notion.
+              </p>
+              <button class="btn btn-primary" onclick="loadDocContent()">
+                Load Document Content
+              </button>
+              <button class="btn btn-secondary" onclick="showApiKeySetup()">
+                Update API Key
+              </button>
+            </div>
+          `;
+        } else {
+          content.innerHTML = `
+            <div class="info">
+              <strong>Setup Required</strong>
+            </div>
+            <div class="card">
+              <p style="color: #5f6368; margin-bottom: 16px;">
+                Please configure your Notion API key to continue.
+              </p>
+              <button class="btn btn-primary" onclick="showApiKeySetup()">
+                Setup API Key
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      function showApiKeySetup() {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="card">
+            <h3 style="margin: 0 0 16px 0; color: #202124; font-size: 16px;">
+              Setup Notion API Key
+            </h3>
+            <div class="form-group">
+              <label class="form-label">Notion Integration Token</label>
+              <input type="text" class="form-input" id="apiKeyInput" placeholder="secret_...">
+            </div>
+            <p style="color: #5f6368; font-size: 12px; margin-top: 8px;">
+              Get your integration token from <a href="https://www.notion.so/my-integrations" target="_blank">Notion Integrations</a>
+            </p>
+            <button class="btn btn-primary" onclick="saveApiKey()">
+              Save API Key
+            </button>
+            <button class="btn btn-secondary" onclick="checkApiKey()">
+              Cancel
+            </button>
+          </div>
+        `;
+      }
+
+      function saveApiKey() {
+        const apiKey = document.getElementById('apiKeyInput').value.trim();
+        if (!apiKey) {
+          alert('Please enter your Notion API key.');
+          return;
+        }
+
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Saving API key...</p>
+          </div>
+        `;
+
+        google.script.run
+          .withSuccessHandler(onApiKeySaved)
+          .withFailureHandler(onSaveError)
+          .apiSaveApiKey(apiKey);
+      }
+
+      function onApiKeySaved(result) {
+        checkApiKey();
+      }
+
+      function loadDocContent() {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading document content...</p>
+          </div>
+        `;
+
+        google.script.run
+          .withSuccessHandler(onContentLoaded)
+          .withFailureHandler(onLoadError)
+          .apiGetDocContent();
+      }
+
+      function onContentLoaded(content) {
+        currentContent = content;
+        showConversionOptions(content);
+      }
+
+      function showConversionOptions(content) {
+        const contentDiv = document.getElementById('content');
+        
+        const blockCount = content.blocks.length;
+        const headingCount = content.blocks.filter(b => b.type.startsWith('heading')).length;
+        const paragraphCount = content.blocks.filter(b => b.type === 'paragraph').length;
+        
+        contentDiv.innerHTML = `
+          <div class="card">
+            <h3 style="margin: 0 0 16px 0; color: #202124; font-size: 16px;">
+              Document Preview
+            </h3>
+            <p style="color: #5f6368; font-size: 13px; margin-bottom: 8px;">
+              <strong>Title:</strong> ${content.title}
+            </p>
+            <p style="content: #5f6368; font-size: 13px; margin-bottom: 16px;">
+              <strong>Content:</strong> ${blockCount} blocks (${headingCount} headings, ${paragraphCount} paragraphs)
+            </p>
+            <div class="form-group">
+              <label class="form-label">Notion Parent Page ID</label>
+              <input type="text" class="form-input" id="parentIdInput" placeholder="32-character Notion page ID">
+            </div>
+            <button class="btn btn-primary" onclick="convertToNotion()">
+              Convert to Notion
+            </button>
+            <button class="btn btn-secondary" onclick="checkApiKey()">
+              Back
+            </button>
+          </div>
+        `;
+      }
+
+      function convertToNotion() {
+        const parentId = document.getElementById('parentIdInput').value.trim();
+        if (!parentId) {
+          alert('Please enter a Notion parent page ID.');
+          return;
+        }
+
+        if (!confirm('Convert this document to Notion?')) {
+          return;
+        }
+
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Converting to Notion...</p>
+          </div>
+        `;
+
+        google.script.run
+          .withSuccessHandler(onConversionComplete)
+          .withFailureHandler(onConversionError)
+          .apiConvertToNotion(parentId, {});
+      }
+
+      function onConversionComplete(result) {
+        const content = document.getElementById('content');
+        
+        content.innerHTML = `
+          <div class="success">
+            <strong>Success!</strong> Document converted to Notion.
+          </div>
+          <div class="card">
+            <p style="color: #5f6368; font-size: 13px; margin-bottom: 8px;">
+              <strong>Notion Page ID:</strong> ${result.pageId}
+            </p>
+            <p style="color: #5f6368; font-size: 13px; margin-bottom: 8px;">
+              <strong>Blocks Processed:</strong> ${result.blocksProcessed}
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="window.open('${result.url}', '_blank')">
+            Open in Notion
+          </button>
+          <button class="btn btn-secondary" onclick="checkApiKey()">
+            Back
+          </button>
+        `;
+      }
+
+      function onCheckError(error) {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="error">
+            <strong>Error:</strong> ${error.message}
+          </div>
+          <button class="btn btn-secondary" onclick="checkApiKey()">
+            Try Again
+          </button>
+        `;
+      }
+
+      function onSaveError(error) {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="error">
+            <strong>Error:</strong> ${error.message}
+          </div>
+          <button class="btn btn-secondary" onclick="showApiKeySetup()">
+            Try Again
+          </button>
+        `;
+      }
+
+      function onLoadError(error) {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="error">
+            <strong>Error:</strong> ${error.message}
+          </div>
+          <button class="btn btn-secondary" onclick="checkApiKey()">
+            Try Again
+          </button>
+        `;
+      }
+
+      function onConversionError(error) {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+          <div class="error">
+            <strong>Error:</strong> ${error.message}
+          </div>
+          <button class="btn btn-secondary" onclick="showConversionOptions(currentContent)">
+            Back to Preview
+          </button>
+        `;
+      }
+    </script>
+  </body>
+</html>
